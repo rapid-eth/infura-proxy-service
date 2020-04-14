@@ -1,7 +1,10 @@
 /* --- Global --- */
 import { ethers } from 'ethers';
+
 import { createEventListener } from './listener';
 import { parseJSONToContract } from './utils';
+import { normalizeEvent } from './utils';
+
 import models from '@models';
 import pubsub, { EVENTS } from '@subscription';
 
@@ -21,9 +24,8 @@ export const initContractEvents = async (
       await initEvent(contract, eventName, fromBlock);
 
       //KICK OFF EVENT LISTENER HERE
-      let eventABI = contract.interface.events[eventName];
-      console.log('kicking off event listener for ' + eventName);
-      await createEventListener(contract, eventName, eventABI.inputs);
+      console.log('kicking off listener on event ' + eventName + " for contract " + contract.address);
+      await createEventListener(provider, contract, eventName);
     }
   } catch (err) {
     console.error(err);
@@ -56,12 +58,13 @@ const initEvent = async (contract, ename, fromBlock) => {
   let eventArray = await contract.queryFilter(ename, fromBlock);
   for (let j = 0; j < eventArray.length; j++) {
     const event = eventArray[j];
-    await processAndStoreEvent(contract, event);
+    await processAndStoreEvent(contract, event, ename);
   }
 };
 
-export const processAndStoreEvent = async (contract, eventLog) => {
-  let eventABI = contract.interface.events[eventLog.eventSignature];
+const processAndStoreEvent = async (contract, eventLog, eventFullName) => {
+
+  let eventABI = contract.interface.events[eventFullName];
   let rawEvent = [];
   for (let k = 0; k < eventABI.inputs.length; k++) {
     const arg = eventLog.args[k];
@@ -78,17 +81,9 @@ export const processAndStoreEvent = async (contract, eventLog) => {
     json_event: jsonEvent,
   };
 
-  console.log('storing new event ' + eventLog.event);
+  console.log('storing event ' + eventLog.event);
   await models.Event.create(storeObject);
   // pubsub.publish(EVENTS.EVENT.CREATED, {
   //   eventCreated: { event: data },
   // });
-};
-
-const normalizeEvent = (e, inputs) => {
-  let o = {};
-  inputs.forEach((input) => {
-    o[input.name] = e[input.name];
-  });
-  return o;
 };

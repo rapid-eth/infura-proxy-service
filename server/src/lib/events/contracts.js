@@ -1,6 +1,7 @@
 import { ethers } from 'ethers';
 import { createEventListener } from './listener';
 import { initEvent } from './event';
+import { parseJSONToContract } from './utils';
 import models from '@models';
 
 export const initNewContract = async (
@@ -52,13 +53,4 @@ export const initContractEvents = async (
   } catch (err) {
     console.error(err);
   }
-};
-
-const parseJSONToContract = (provider, contractData) => {
-  const contract = new ethers.Contract(
-    contractData.address,
-    contractData.abi,
-    provider
-  );
-  return contract;
 };

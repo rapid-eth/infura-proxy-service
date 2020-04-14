@@ -26,3 +26,11 @@ export const contractDataToEventTopics = async (provider, contractData) => {
   let eventSignatures = contractEvents.map(e => ethers.utils.id(e))
   return eventSignatures
 }
+
+export const normalizeEvent = (e, inputs) => {
+  let o = {};
+  inputs.forEach((input) => {
+    o[input.name] = e[input.name];
+  });
+  return o;
+};

@@ -1,7 +1,6 @@
 import fs from 'fs';
 import path from 'path';
 import models from '@models';
-import { ethers } from 'ethers';
 
 import { initContractEvents } from './event';
 import { parseContractJSON, contractDataToEventTopics } from './utils'
@@ -63,7 +62,6 @@ export const initFromConfig = async (dir, provider) => {
   }
 };
 
-
 /**
  * @function initFromDB
  * @description Restarts existing contracts to find any events missed while the server was not running
@@ -73,7 +71,8 @@ export const initFromDB = async (provider) => {
   console.log("Intitializing Events for Contracts in DB...")
   
   // Find the block last logged into the DB so we can start from there
-  let fromBlock = getLatestBlockNumberFromEvents(provider) || FROM_BLOCK
+  let latestFromDB = await getLatestBlockNumberFromEvents(provider)
+  let fromBlock = latestFromDB ? (latestFromDB + 1) : FROM_BLOCK
 
   // Get a list of contracts already in the DB
   let contractsInDB = await models.Contract.findAll({})
@@ -84,7 +83,6 @@ export const initFromDB = async (provider) => {
     //only calls to init events (does not re-add to DB)
     await initContractEvents(provider, c, fromBlock);
   }
-
 }
 
 const getLatestBlockNumberFromEvents = async (provider) => {
